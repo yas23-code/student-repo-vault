@@ -1,26 +1,78 @@
 import { useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock data - will be replaced with real data from database
-const SAMPLE_PDFS = [
-  { id: 1, name: "Mathematics - Question Paper", type: "question_paper" },
-  { id: 2, name: "Physics - Notes", type: "notes" },
-  { id: 3, name: "Chemistry - Question Paper", type: "question_paper" },
-  { id: 4, name: "English - Notes", type: "notes" },
-];
+interface Resource {
+  id: string;
+  name: string;
+  type: string;
+  file_path: string;
+}
 
 const Year = () => {
   const { semesterId, year } = useParams();
   const { toast } = useToast();
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleDownload = (pdfName: string) => {
-    toast({
-      title: "Download started",
-      description: `Downloading ${pdfName}...`,
-    });
+  useEffect(() => {
+    fetchResources();
+  }, [semesterId, year]);
+
+  const fetchResources = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('semester', parseInt(semesterId || '0'))
+        .eq('year', parseInt(year || '0'))
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setResources(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error loading resources",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async (resource: Resource) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('pdfs')
+        .download(resource.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = resource.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download started",
+        description: `Downloading ${resource.name}...`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Download failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -42,34 +94,50 @@ const Year = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          {SAMPLE_PDFS.map((pdf) => (
-            <Card key={pdf.id} className="p-6 hover:shadow-elevated transition-all duration-300 bg-card border-border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent">
-                    <FileText className="w-6 h-6 text-primary-foreground" />
+        {loading ? (
+          <div className="text-center text-muted-foreground py-12">
+            Loading resources...
+          </div>
+        ) : resources.length === 0 ? (
+          <Card className="p-12 text-center bg-card border-border">
+            <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              No resources found
+            </h3>
+            <p className="text-muted-foreground">
+              No PDFs have been uploaded for Semester {semesterId} - Year {year} yet.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {resources.map((resource) => (
+              <Card key={resource.id} className="p-6 hover:shadow-elevated transition-all duration-300 bg-card border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent">
+                      <FileText className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {resource.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1 capitalize">
+                        {resource.type.replace("_", " ")}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {pdf.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1 capitalize">
-                      {pdf.type.replace("_", " ")}
-                    </p>
-                  </div>
+                  <Button
+                    onClick={() => handleDownload(resource)}
+                    className="bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-opacity"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => handleDownload(pdf.name)}
-                  className="bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-opacity"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

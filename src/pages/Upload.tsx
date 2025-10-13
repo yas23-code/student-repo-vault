@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,15 +7,37 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload as UploadIcon, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Upload = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [semester, setSemester] = useState("");
   const [year, setYear] = useState("");
   const [type, setType] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-  const handleUpload = (e: React.FormEvent) => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        navigate("/auth");
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!semester || !year || !type || !file) {
@@ -26,16 +49,62 @@ const Upload = () => {
       return;
     }
 
-    toast({
-      title: "Upload successful",
-      description: `${file.name} has been uploaded successfully!`,
-    });
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload files",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
 
-    // Reset form
-    setSemester("");
-    setYear("");
-    setType("");
-    setFile(null);
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${semester}/${year}/${type}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('pdfs')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: dbError } = await supabase
+        .from('resources')
+        .insert({
+          semester: parseInt(semester),
+          year: parseInt(year),
+          type,
+          name: file.name,
+          file_path: fileName,
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Upload successful",
+        description: `${file.name} has been uploaded successfully!`,
+      });
+
+      setSemester("");
+      setYear("");
+      setType("");
+      setFile(null);
+      
+      const fileInput = document.getElementById('file') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -118,10 +187,11 @@ const Upload = () => {
 
             <Button
               type="submit"
+              disabled={uploading}
               className="w-full bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-opacity text-lg py-6"
             >
               <UploadIcon className="w-5 h-5 mr-2" />
-              Upload Resource
+              {uploading ? "Uploading..." : "Upload Resource"}
             </Button>
           </form>
         </Card>

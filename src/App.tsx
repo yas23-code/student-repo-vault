@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Semester from "./pages/Semester";
 import Year from "./pages/Year";
 import Upload from "./pages/Upload";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/semester/:semesterId" element={<Semester />} />
           <Route path="/semester/:semesterId/year/:year" element={<Year />} />
           <Route path="/upload" element={<Upload />} />
+          <Route path="/auth" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
