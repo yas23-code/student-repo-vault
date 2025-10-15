@@ -2,7 +2,8 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, FileText, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, FileText, Download, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,6 +19,7 @@ const Year = () => {
   const { toast } = useToast();
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchResources();
@@ -85,13 +87,23 @@ const Year = () => {
           </Button>
         </Link>
 
-        <div className="mb-12">
+        <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-3">
             Semester {semesterId} - Year {year}
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-lg mb-6">
             Available study materials and question papers
           </p>
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search PDFs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
 
         {loading ? (
@@ -110,7 +122,12 @@ const Year = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {resources.map((resource) => (
+            {resources
+              .filter((resource) =>
+                resource.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                resource.type.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((resource) => (
               <Card key={resource.id} className="p-4 sm:p-6 hover:shadow-elevated transition-all duration-300 bg-card border-border">
                 <div className="flex items-start gap-4">
                   <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent flex-shrink-0">
