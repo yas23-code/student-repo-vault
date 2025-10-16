@@ -40,10 +40,11 @@ const Upload = () => {
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!semester || !year || !type || !file) {
+    // For notes, year is not required
+    if (!semester || !type || !file || (type === "question_paper" && !year)) {
       toast({
         title: "Missing information",
-        description: "Please fill all fields and select a file",
+        description: "Please fill all required fields and select a file",
         variant: "destructive",
       });
       return;
@@ -63,7 +64,9 @@ const Upload = () => {
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${semester}/${year}/${type}/${Date.now()}.${fileExt}`;
+      const fileName = type === "notes" 
+        ? `${semester}/notes/${Date.now()}.${fileExt}`
+        : `${semester}/${year}/${type}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('pdfs')
@@ -75,7 +78,7 @@ const Upload = () => {
         .from('resources')
         .insert({
           semester: parseInt(semester),
-          year: parseInt(year),
+          year: type === "notes" ? null : parseInt(year),
           type,
           name: file.name,
           file_path: fileName,
@@ -137,21 +140,23 @@ const Upload = () => {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="year">Year</Label>
-              <Select value={year} onValueChange={setYear}>
-                <SelectTrigger id="year">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[2024, 2023, 2022, 2021, 2020].map((yr) => (
-                    <SelectItem key={yr} value={yr.toString()}>
-                      {yr}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {type !== "notes" && (
+              <div className="space-y-2">
+                <Label htmlFor="year">Year</Label>
+                <Select value={year} onValueChange={setYear}>
+                  <SelectTrigger id="year">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[2025, 2024, 2023, 2022, 2021, 2020].map((yr) => (
+                      <SelectItem key={yr} value={yr.toString()}>
+                        {yr}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="type">Resource Type</Label>

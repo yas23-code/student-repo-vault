@@ -22,7 +22,7 @@ export type Database = {
           name: string
           semester: number
           type: string
-          year: number
+          year: number | null
         }
         Insert: {
           created_at?: string
@@ -31,7 +31,7 @@ export type Database = {
           name: string
           semester: number
           type: string
-          year: number
+          year?: number | null
         }
         Update: {
           created_at?: string
@@ -40,7 +40,7 @@ export type Database = {
           name?: string
           semester?: number
           type?: string
-          year?: number
+          year?: number | null
         }
         Relationships: []
       }
