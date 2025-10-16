@@ -9,12 +9,25 @@ import { Upload as UploadIcon, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+const SUBJECTS = [
+  "maths-4",
+  "Dstl",
+  "Data Structure",
+  "COA",
+  "Cyber-security",
+  "Python",
+  "UHVPE",
+  "Technical-Communication",
+  "Digital-Electronics"
+];
+
 const Upload = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [semester, setSemester] = useState("");
   const [year, setYear] = useState("");
   const [type, setType] = useState("");
+  const [subject, setSubject] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -40,8 +53,8 @@ const Upload = () => {
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For notes, year is not required
-    if (!semester || !type || !file || (type === "question_paper" && !year)) {
+    // For notes, year is not required but subject is
+    if (!semester || !type || !file || (type === "question_paper" && !year) || (type === "notes" && !subject)) {
       toast({
         title: "Missing information",
         description: "Please fill all required fields and select a file",
@@ -65,7 +78,7 @@ const Upload = () => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = type === "notes" 
-        ? `${semester}/notes/${Date.now()}.${fileExt}`
+        ? `${semester}/notes/${subject}/${Date.now()}.${fileExt}`
         : `${semester}/${year}/${type}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
@@ -82,6 +95,7 @@ const Upload = () => {
           type,
           name: file.name,
           file_path: fileName,
+          subject: type === "notes" ? subject : null,
         });
 
       if (dbError) throw dbError;
@@ -94,6 +108,7 @@ const Upload = () => {
       setSemester("");
       setYear("");
       setType("");
+      setSubject("");
       setFile(null);
       
       const fileInput = document.getElementById('file') as HTMLInputElement;
@@ -170,6 +185,24 @@ const Upload = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {type === "notes" && (
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger id="subject">
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUBJECTS.map((subj) => (
+                      <SelectItem key={subj} value={subj}>
+                        {subj}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="file">PDF File</Label>

@@ -3,16 +3,30 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileText, Download, Search } from "lucide-react";
+import { ArrowLeft, FileText, Download, Search, Folder } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface Resource {
   id: string;
   name: string;
   type: string;
   file_path: string;
+  subject: string | null;
 }
+
+const SUBJECTS = [
+  "maths-4",
+  "Dstl",
+  "Data Structure",
+  "COA",
+  "Cyber-security",
+  "Python",
+  "UHVPE",
+  "Technical-Communication",
+  "Digital-Electronics"
+];
 
 const Notes = () => {
   const { semesterId } = useParams();
@@ -122,33 +136,75 @@ const Notes = () => {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {notes
-              .filter((note) =>
-                note.name.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((note) => (
-              <Card key={note.id} className="p-4 sm:p-6 hover:shadow-elevated transition-all duration-300 bg-card border-border">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent flex-shrink-0">
-                    <FileText className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-foreground mb-3">
-                      {note.name}
-                    </h3>
-                    <Button
-                      onClick={() => handleDownload(note)}
-                      className="w-full sm:w-auto bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-opacity"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <Accordion type="multiple" className="space-y-4">
+            {SUBJECTS.map((subject) => {
+              const subjectNotes = notes.filter(
+                (note) =>
+                  note.subject === subject &&
+                  (searchQuery === "" ||
+                    note.name.toLowerCase().includes(searchQuery.toLowerCase()))
+              );
+
+              if (subjectNotes.length === 0 && searchQuery !== "") return null;
+
+              return (
+                <AccordionItem
+                  key={subject}
+                  value={subject}
+                  className="border rounded-lg bg-card"
+                >
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
+                        <Folder className="w-5 h-5 text-primary-foreground" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {subject}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {subjectNotes.length} {subjectNotes.length === 1 ? 'file' : 'files'}
+                        </p>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    {subjectNotes.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">
+                        No notes uploaded yet
+                      </p>
+                    ) : (
+                      <div className="space-y-3 mt-3">
+                        {subjectNotes.map((note) => (
+                          <Card
+                            key={note.id}
+                            className="p-4 hover:shadow-md transition-all duration-300 bg-background/50"
+                          >
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <FileText className="w-5 h-5 text-primary flex-shrink-0" />
+                                <span className="font-medium text-foreground truncate">
+                                  {note.name}
+                                </span>
+                              </div>
+                              <Button
+                                onClick={() => handleDownload(note)}
+                                size="sm"
+                                className="bg-gradient-to-r from-accent to-primary hover:opacity-90 transition-opacity flex-shrink-0"
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
+                              </Button>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
         )}
       </div>
     </div>

@@ -21,6 +21,7 @@ export type Database = {
           id: string
           name: string
           semester: number
+          subject: string | null
           type: string
           year: number | null
         }
@@ -30,6 +31,7 @@ export type Database = {
           id?: string
           name: string
           semester: number
+          subject?: string | null
           type: string
           year?: number | null
         }
@@ -39,6 +41,7 @@ export type Database = {
           id?: string
           name?: string
           semester?: number
+          subject?: string | null
           type?: string
           year?: number | null
         }
