@@ -16,17 +16,29 @@ interface Resource {
   subject: string | null;
 }
 
-const SUBJECTS = [
-  "maths-4",
-  "Dstl",
-  "Data Structure",
-  "COA",
-  "Cyber-security",
-  "Python",
-  "UHVPE",
-  "Technical-Communication",
-  "Digital-Electronics"
-];
+const SEMESTER_SUBJECTS: Record<number, string[]> = {
+  3: [
+    "maths-4",
+    "Dstl",
+    "Data Structure",
+    "COA",
+    "Cyber-security",
+    "Python",
+    "UHVPE",
+    "Technical-Communication",
+    "Digital-Electronics"
+  ],
+  4: [
+    "Maths-4",
+    "Technical-Communication",
+    "UHVPE",
+    "Python",
+    "Cyber-Security",
+    "Operating-System",
+    "OOPS with Java",
+    "Theory of Automate and Formal Languages"
+  ]
+};
 
 const Notes = () => {
   const { semesterId } = useParams();
@@ -34,6 +46,9 @@ const Notes = () => {
   const [notes, setNotes] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  const currentSemester = parseInt(semesterId || '0');
+  const subjects = SEMESTER_SUBJECTS[currentSemester] || [];
 
   useEffect(() => {
     fetchNotes();
@@ -137,7 +152,7 @@ const Notes = () => {
           </Card>
         ) : (
           <Accordion type="multiple" className="space-y-4">
-            {SUBJECTS.map((subject) => {
+            {subjects.map((subject) => {
               const subjectNotes = notes.filter(
                 (note) =>
                   note.subject === subject &&

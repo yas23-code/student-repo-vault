@@ -9,17 +9,29 @@ import { Upload as UploadIcon, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const SUBJECTS = [
-  "maths-4",
-  "Dstl",
-  "Data Structure",
-  "COA",
-  "Cyber-security",
-  "Python",
-  "UHVPE",
-  "Technical-Communication",
-  "Digital-Electronics"
-];
+const SEMESTER_SUBJECTS: Record<number, string[]> = {
+  3: [
+    "maths-4",
+    "Dstl",
+    "Data Structure",
+    "COA",
+    "Cyber-security",
+    "Python",
+    "UHVPE",
+    "Technical-Communication",
+    "Digital-Electronics"
+  ],
+  4: [
+    "Maths-4",
+    "Technical-Communication",
+    "UHVPE",
+    "Python",
+    "Cyber-Security",
+    "Operating-System",
+    "OOPS with Java",
+    "Theory of Automate and Formal Languages"
+  ]
+};
 
 const Upload = () => {
   const { toast } = useToast();
@@ -186,7 +198,7 @@ const Upload = () => {
               </Select>
             </div>
 
-            {type === "notes" && (
+            {type === "notes" && semester && (
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
                 <Select value={subject} onValueChange={setSubject}>
@@ -194,7 +206,7 @@ const Upload = () => {
                     <SelectValue placeholder="Select subject" />
                   </SelectTrigger>
                   <SelectContent>
-                    {SUBJECTS.map((subj) => (
+                    {(SEMESTER_SUBJECTS[parseInt(semester)] || []).map((subj) => (
                       <SelectItem key={subj} value={subj}>
                         {subj}
                       </SelectItem>
