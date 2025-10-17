@@ -37,6 +37,13 @@ const SEMESTER_SUBJECTS: Record<number, string[]> = {
     "Operating-System",
     "OOPS with Java",
     "Theory of Automate and Formal Languages"
+  ],
+  5: [
+    "DAA",
+    "DBMS",
+    "Web Technology",
+    "Object Oriented System Design",
+    "Appliction Of Soft Computing"
   ]
 };
 
