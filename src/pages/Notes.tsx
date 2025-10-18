@@ -44,6 +44,12 @@ const SEMESTER_SUBJECTS: Record<number, string[]> = {
     "Web Technology",
     "Object Oriented System Design",
     "Appliction Of Soft Computing"
+  ],
+  6: [
+    "Software Engneering",
+    "Compiler Design",
+    "Computer Networks",
+    "Big Data"
   ]
 };
 
