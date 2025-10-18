@@ -43,6 +43,11 @@ const SEMESTER_SUBJECTS: Record<number, string[]> = {
     "Compiler Design",
     "Computer Networks",
     "Big Data"
+  ],
+  7: [
+    "AI",
+    "Cloud Computing",
+    "Open Elective-ii"
   ]
 };
 
